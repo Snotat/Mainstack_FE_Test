@@ -2,7 +2,7 @@ import { useFilterStore } from '@/store/filter-store';
 import { differenceInDays, isThisMonth } from 'date-fns';
 import { formatDate } from '@/lib/utils';
 import { Transaction } from '@/lib/types';
-import {fetchTransactions} from '@/lib/api.ts'
+import {fetchTransactions} from '@/lib/api'
 import axios from 'axios'
 
 const useTransaction = async () => {
@@ -85,13 +85,13 @@ const useTransaction = async () => {
     return true;
   });
 
-  const handleClearFilters = () => {
+  const handleClearFilters =async () => {
     setDateRange({ from: undefined, to: undefined });
     setTransactionType(['all']);
     setTransactionStatus(['all']);
   };
 
-  const handleExportList = () => {
+  const handleExportList = async () => {
     if (!filteredTransactions) return;
 
     // Create CSV content
