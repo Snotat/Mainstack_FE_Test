@@ -33,9 +33,9 @@ export function TransactionList({ filters }: { filters?: any[] }) {
   useEffect(() => {
     const getTransactions = async () => {
       const response = await fetchTransactions();
-      if (response?.data) {
-        setTransactionList(response.data);
-        console.log('Fetched transactions:', response.data);
+      if (response) {
+        setTransactionList(response);
+        console.log('Fetched transactions:', response);
       }
     };
     getTransactions();
