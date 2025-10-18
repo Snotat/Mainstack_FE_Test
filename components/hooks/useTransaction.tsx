@@ -21,7 +21,7 @@ const useTransaction = () => {
   useEffect(() => {
     const fetchData = async () => {
       const transactions = await fetchTransactions();
-      const filtered = transactions.data?.filter((transaction: any) => {
+      const filtered = transactions?.filter((transaction: any) => {
         if (dateRange.from && dateRange.to) {
           const transactionDate = new Date(transaction.date);
           if (transactionDate < dateRange.from || transactionDate > dateRange.to) return false;
