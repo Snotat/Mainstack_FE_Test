@@ -30,7 +30,6 @@ export function TransactionList({ filters }: { filters?: any[] }) {
     setIsFilterOpen,
   } = useFilterStore();
   const {
-    filteredTransactions,
     getFilterText,
     activeFiltersCount,
     handleExportList,
