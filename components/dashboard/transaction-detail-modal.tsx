@@ -21,7 +21,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 
 interface TransactionDetailModalProps {
-  transaction: Transaction | deposit;
+  transaction: Transaction;
   isOpen: boolean;
   onClose: () => void;
   isMobile?: boolean;
