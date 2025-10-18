@@ -1,11 +1,10 @@
+import { useEffect, useState } from 'react';
 import { useFilterStore } from '@/store/filter-store';
 import { differenceInDays, isThisMonth } from 'date-fns';
 import { formatDate } from '@/lib/utils';
-import { Transaction } from '@/lib/types';
-import {fetchTransactions} from '@/lib/api'
-import axios from 'axios'
+import { fetchTransactions } from '@/lib/api';
 
-const useTransaction = async () => {
+const useTransaction = () => {
   const {
     isFilterOpen,
     dateRange,
@@ -17,6 +16,34 @@ const useTransaction = async () => {
     setIsFilterOpen,
   } = useFilterStore();
 
+  const [filteredTransactions, setFilteredTransactions] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const transactions = await fetchTransactions();
+      const filtered = transactions.data?.filter((transaction: any) => {
+        if (dateRange.from && dateRange.to) {
+          const transactionDate = new Date(transaction.date);
+          if (transactionDate < dateRange.from || transactionDate > dateRange.to) return false;
+        }
+
+        if (transactionType.length > 0 && !transactionType.includes('all')) {
+          if (!transactionType.includes(transaction?.type)) return false;
+        }
+
+        if (transactionStatus.length > 0 && !transactionStatus.includes('all')) {
+          if (!transactionStatus.includes(transaction.status)) return false;
+        }
+
+        return true;
+      });
+
+      setFilteredTransactions(filtered || []);
+    };
+
+    fetchData();
+  }, [dateRange, transactionType, transactionStatus]);
+
   const activeFiltersCount = [
     dateRange.from || dateRange.to ? 1 : 0,
     transactionType.length > 0 && !transactionType.includes('all') ? 1 : 0,
@@ -24,77 +51,33 @@ const useTransaction = async () => {
   ].reduce((acc, curr) => acc + curr, 0);
 
   const getFilterText = () => {
-    if (!dateRange.from && !dateRange.to) {
-      return 'Your transactions for All time';
-    }
+    if (!dateRange.from && !dateRange.to) return 'Your transactions for All time';
 
     if (dateRange.from && dateRange.to) {
       const days = differenceInDays(dateRange.to, dateRange.from);
 
-      if (days === 7) {
-        return 'Your transactions for the last 7 days';
-      }
+      if (days === 7) return 'Your transactions for the last 7 days';
+      if (days === 30) return 'Your transactions for the last 30 days';
+      if (isThisMonth(dateRange.from) && isThisMonth(dateRange.to)) return 'Your transactions for This month';
 
-      if (days === 30) {
-        return 'Your transactions for the last 30 days';
-      }
-
-      if (isThisMonth(dateRange.from) && isThisMonth(dateRange.to)) {
-        return 'Your transactions for This month';
-      }
-      return `Your transactions from ${formatDate(
-        dateRange.from.toString()
-      )} to ${formatDate(dateRange.to.toString())}`;
-    }
-    if (dateRange.from) {
-      return `Your transactions from ${formatDate(dateRange.from.toString())}`;
+      return `Your transactions from ${formatDate(dateRange.from.toString())} to ${formatDate(dateRange.to.toString())}`;
     }
 
-    if (dateRange.to) {
-      return `Your transactions until ${formatDate(dateRange.to.toString())}`;
-    }
+    if (dateRange.from) return `Your transactions from ${formatDate(dateRange.from.toString())}`;
+    if (dateRange.to) return `Your transactions until ${formatDate(dateRange.to.toString())}`;
 
     return 'Your transactions for All time';
   };
 
- let transactions = await fetchTransactions()
- console.log('transactionss', transactions)
-  const filteredTransactions = await transactions.data?.filter((transaction) => {
-    // Date range filter
-    if (dateRange.from && dateRange.to) {
-      const transactionDate = new Date(transaction.date);
-      if (transactionDate < dateRange.from || transactionDate > dateRange.to) {
-        return false;
-      }
-    }
-
-    // Transaction type filter
-    if (transactionType.length > 0 && !transactionType.includes('all')) {
-      if (!transactionType.includes(transaction?.type as any)) {
-        return false;
-      }
-    }
-
-    // Transaction status filter
-    if (transactionStatus.length > 0 && !transactionStatus.includes('all')) {
-      if (!transactionStatus.includes(transaction.status)) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-
-  const handleClearFilters =async () => {
+  const handleClearFilters = () => {
     setDateRange({ from: undefined, to: undefined });
     setTransactionType(['all']);
     setTransactionStatus(['all']);
   };
 
-  const handleExportList = async () => {
+  const handleExportList = () => {
     if (!filteredTransactions) return;
 
-    // Create CSV content
     const headers = ['Date', 'Description', 'Name', 'Amount', 'Status'];
     const csvContent = [
       headers.join(','),
@@ -115,11 +98,9 @@ const useTransaction = async () => {
       ),
     ].join('\n');
 
-    // Add footer note
     const footerNote = '\n\nThank you for checking this out!';
     const finalContent = csvContent + footerNote;
 
-    // Create and download the file
     const blob = new Blob([finalContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
